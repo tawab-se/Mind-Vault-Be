@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (uncomment when needed)
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: mind-vault-db
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #     POSTGRES_DB: mind_vault_db
+  #   ports:
+  #     - '5432:5432'
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - mind-vault-network
+
+  # Redis Cache (uncomment when needed)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: mind-vault-cache
+  #   restart: unless-stopped
+  #   ports:
+  #     - '6379:6379'
+  #   command: redis-server --appendonly yes
+  #   volumes:
+  #     - redis-data:/data
+  #   networks:
+  #     - mind-vault-network
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  mind-vault-network:
+    driver: bridge
