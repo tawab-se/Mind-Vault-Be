@@ -65,18 +65,23 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
 
-    logger.log(`Swagger docs available at http://localhost:${port}/${apiPrefix}/docs`);
+    logger.log(
+      `Swagger docs available at http://localhost:${port}/${apiPrefix}/docs`,
+    );
   }
 
   // Start server
   await app.listen(port);
 
   logger.log(`Application is running on: http://localhost:${port}`);
-  logger.log(`API endpoint: http://localhost:${port}/${apiPrefix}/${apiVersion}`);
+  logger.log(
+    `API endpoint: http://localhost:${port}/${apiPrefix}/${apiVersion}`,
+  );
   logger.log(`Environment: ${configService.get<string>('app.nodeEnv')}`);
 }
 
-bootstrap().catch((error) => {
-  console.error('Error starting application:', error);
+bootstrap().catch((error: Error) => {
+  const logger = new Logger('Bootstrap');
+  logger.error('Error starting application:', error.stack);
   process.exit(1);
 });
