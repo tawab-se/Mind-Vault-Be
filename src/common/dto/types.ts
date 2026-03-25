@@ -3,6 +3,8 @@ export type Role = 'admin' | 'member';
 export interface IUser {
   id: string;
   email: string;
+  first_name?: string;
+  last_name?: string;
   organization_id: string;
   role: Role;
   created_at: string;

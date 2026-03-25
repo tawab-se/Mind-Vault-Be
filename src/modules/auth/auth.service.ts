@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { supabase } from '../../utils/supabase-client';
 import { SignupDto } from './dto/signup.dto';
@@ -18,6 +19,7 @@ import {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   async signup(dto: SignupDto): Promise<ISignupResponse | IAuthResponse> {
     // CASE 1: Signup with invitation token
     if (dto.invitation_token) {
@@ -69,6 +71,8 @@ export class AuthService {
       .insert({
         id: authData.user.id,
         email: dto.email,
+        first_name: dto.first_name,
+        last_name: dto.last_name,
         organization_id: org.id,
         role: 'admin',
       })
@@ -81,6 +85,19 @@ export class AuthService {
       await supabase.from('organizations').delete().eq('id', org.id);
       throw new BadRequestException(
         `Failed to create user record: ${userError?.message || 'Unknown error'}`,
+      );
+    }
+
+    // 5. Log info for email verification
+    if (!shouldAutoActivate) {
+      this.logger.warn(
+        `📧 User created: ${dto.email} - Email verification required`,
+      );
+      this.logger.warn(
+        '⚠️  Ensure Supabase SMTP is configured for email verification (Settings > Auth > Email in Supabase Dashboard)',
+      );
+      this.logger.warn(
+        '💡 Tip: Use +test in email (e.g., user+test@example.com) to auto-verify during testing',
       );
     }
 
@@ -151,6 +168,8 @@ export class AuthService {
       .insert({
         id: authData.user.id,
         email: invitation.email,
+        first_name: dto.first_name,
+        last_name: dto.last_name,
         organization_id: invitation.organization_id,
         role: invitation.role,
       })
@@ -242,12 +261,22 @@ export class AuthService {
       throw new BadRequestException('Email does not match invitation');
     }
 
+    // 2.5. Get user's first_name and last_name from existing record
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('first_name, last_name')
+      .eq('id', authData.user.id)
+      .limit(1)
+      .single<Pick<IUser, 'first_name' | 'last_name'>>();
+
     // 3. Create user in application table (add to new organization)
     const { data: user, error: userError } = await supabase
       .from('users')
       .insert({
         id: authData.user.id,
         email: invitation.email,
+        first_name: existingUser?.first_name,
+        last_name: existingUser?.last_name,
         organization_id: invitation.organization_id,
         role: invitation.role,
       })

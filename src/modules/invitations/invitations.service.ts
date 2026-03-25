@@ -123,12 +123,22 @@ export class InvitationsService {
       throw new BadRequestException('Invitation has expired');
     }
 
+    // 3.5. Get user's first_name and last_name from existing record
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('first_name, last_name')
+      .eq('id', authData.user.id)
+      .limit(1)
+      .single<Pick<IUser, 'first_name' | 'last_name'>>();
+
     // 4. Create user in application table
     const { data: user, error: userError } = await supabase
       .from('users')
       .insert({
         id: authData.user.id,
         email: invitation.email,
+        first_name: existingUser?.first_name,
+        last_name: existingUser?.last_name,
         organization_id: invitation.organization_id,
         role: invitation.role,
       })
